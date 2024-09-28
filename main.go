@@ -1,12 +1,7 @@
 package main
 
-import "fmt"
+import "net/http"
 
 func main() {
-
-	var p *int
-
-	fmt.Println(p)
-	//fmt.Println(*p)
-	fmt.Println(&p)
+	http.ListenAndServe(":8080", http.FileServer(http.Dir(".")))
 }
