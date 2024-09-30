@@ -3,5 +3,8 @@ package main
 import "net/http"
 
 func main() {
-	http.ListenAndServe(":8080", http.FileServer(http.Dir(".")))
+	serveMux := http.NewServeMux()
+	x := http.Server{Addr: ":8080",
+		Handler: serveMux}
+	x.ListenAndServe()
 }
