@@ -24,8 +24,8 @@ func (config *apiConfig) checkHits(w http.ResponseWriter, req *http.Request) {
 	//w.Write([]byte(config.fileserverHits))
 }
 
-func resetHits(w http.ResponseWriter, req *http.Request) {
-
+func (config *apiConfig) resetHits(w http.ResponseWriter, req *http.Request) {
+	config.fileserverHits.Store(0)
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -44,7 +44,7 @@ func main() {
 	serveMux.HandleFunc("/healthz", checkReadiness)
 	serveMux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	serveMux.HandleFunc("/metrics", cfg.checkHits)
-	serveMux.HandleFunc("/reset", resetHits)
+	serveMux.HandleFunc("/reset", cfg.resetHits)
 
 	server := &http.Server{Addr: ":8080",
 		Handler: serveMux}
