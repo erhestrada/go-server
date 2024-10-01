@@ -19,8 +19,9 @@ type apiConfig struct {
 
 func (config *apiConfig) checkHits(w http.ResponseWriter, req *http.Request) {
 	//w.Write([]byte("OK"))
-	w.Header().Set("Content-Type", "text/plain")
-	fmt.Fprint(w, config.fileserverHits)
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(fmt.Sprintf("<html><body>Page visited %d times</body></html>", config.fileserverHits)))
+	//fmt.Fprint(w, config.fileserverHits)
 	//w.Write([]byte(config.fileserverHits))
 }
 
@@ -43,7 +44,7 @@ func main() {
 	serveMux.Handle("/app/assets/catpfp.jpg", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
 	serveMux.HandleFunc("GET /api/healthz", checkReadiness)
 	serveMux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
-	serveMux.HandleFunc("GET /api/metrics", cfg.checkHits)
+	serveMux.HandleFunc("GET /admin/metrics", cfg.checkHits)
 	serveMux.HandleFunc("POST /api/reset", cfg.resetHits)
 
 	server := &http.Server{Addr: ":8080",
