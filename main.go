@@ -41,10 +41,10 @@ func main() {
 	serveMux := http.NewServeMux()
 	//serveMux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
 	serveMux.Handle("/app/assets/catpfp.jpg", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
-	serveMux.HandleFunc("/healthz", checkReadiness)
+	serveMux.HandleFunc("GET /healthz", checkReadiness)
 	serveMux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
-	serveMux.HandleFunc("/metrics", cfg.checkHits)
-	serveMux.HandleFunc("/reset", cfg.resetHits)
+	serveMux.HandleFunc("GET /metrics", cfg.checkHits)
+	serveMux.HandleFunc("POST /reset", cfg.resetHits)
 
 	server := &http.Server{Addr: ":8080",
 		Handler: serveMux}
