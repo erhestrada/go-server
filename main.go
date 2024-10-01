@@ -36,6 +36,10 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	})
 }
 
+func validateJson(w http.ResponseWriter, req *http.Request) {
+
+}
+
 func main() {
 	cfg := &apiConfig{fileserverHits: atomic.Int32{}}
 
@@ -46,6 +50,7 @@ func main() {
 	serveMux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	serveMux.HandleFunc("GET /admin/metrics", cfg.checkHits)
 	serveMux.HandleFunc("POST /admin/reset", cfg.resetHits)
+	serveMux.HandleFunc("POST /api/validate_json", validateJson)
 
 	server := &http.Server{Addr: ":8080",
 		Handler: serveMux}
