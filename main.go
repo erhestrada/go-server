@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sync/atomic"
+	"time"
 )
 
 func checkReadiness(w http.ResponseWriter, req *http.Request) {
@@ -39,10 +40,13 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func validateJson(w http.ResponseWriter, req *http.Request) {
-	decodeJson(w, req)
+	validJsonRequest := decodeJson(w, req)
+	if validJsonRequest {
+		encodeJson(w)
+	}
 }
 
-func decodeJson(w http.ResponseWriter, req *http.Request) {
+func decodeJson(w http.ResponseWriter, req *http.Request) bool {
 	type parameters struct {
 		Body string `json:"body"`
 	}
@@ -53,10 +57,30 @@ func decodeJson(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		w.WriteHeader(500)
-		return
+		return false
 	}
 	fmt.Println(params)
+	return true
+}
 
+func encodeJson(w http.ResponseWriter) {
+	type returnVals struct {
+		CreatedAt time.Time `json:"created_at"`
+		ID        int       `json:"id"`
+	}
+	respBody := returnVals{
+		CreatedAt: time.Now(),
+		ID:        123,
+	}
+	dat, err := json.Marshal(respBody)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(dat)
 }
 
 func main() {
