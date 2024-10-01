@@ -51,14 +51,27 @@ func decodeJson(w http.ResponseWriter, req *http.Request) bool {
 		Body string `json:"body"`
 	}
 
+	maxCharacters := 140
+
 	decoder := json.NewDecoder(req.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
+	//fmt.Println(params)
+	//fmt.Println(params.Body)
+	//fmt.Println(len(params.Body))
 	if err != nil {
-		log.Printf("Error decoding parameters: %s", err)
+		//log.Printf("Error decoding parameters: %s", err)
+		log.Printf("something went wrong :/")
 		w.WriteHeader(500)
 		return false
 	}
+
+	if len(params.Body) > maxCharacters {
+		log.Printf("too many characters >:(")
+		w.WriteHeader(400)
+		return false
+	}
+
 	fmt.Println(params)
 	return true
 }
@@ -67,10 +80,12 @@ func encodeJson(w http.ResponseWriter) {
 	type returnVals struct {
 		CreatedAt time.Time `json:"created_at"`
 		ID        int       `json:"id"`
+		Valid     bool      `json:"valid"`
 	}
 	respBody := returnVals{
 		CreatedAt: time.Now(),
 		ID:        123,
+		Valid:     true,
 	}
 	dat, err := json.Marshal(respBody)
 	if err != nil {
