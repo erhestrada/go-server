@@ -41,12 +41,14 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 
 func validateJson(w http.ResponseWriter, req *http.Request) {
 	validJsonRequest := decodeJson(w, req)
-	if validJsonRequest {
-		encodeJson(w)
+	if validJsonRequest == 200 {
+		encodeJsonValidRequest(w, true)
+	} else if validJsonRequest == 400 {
+		encodeJsonInvalidRequest(w)
 	}
 }
 
-func decodeJson(w http.ResponseWriter, req *http.Request) bool {
+func decodeJson(w http.ResponseWriter, req *http.Request) int {
 	type parameters struct {
 		Body string `json:"body"`
 	}
@@ -59,24 +61,25 @@ func decodeJson(w http.ResponseWriter, req *http.Request) bool {
 	//fmt.Println(params)
 	//fmt.Println(params.Body)
 	//fmt.Println(len(params.Body))
+
 	if err != nil {
 		//log.Printf("Error decoding parameters: %s", err)
 		log.Printf("something went wrong :/")
 		w.WriteHeader(500)
-		return false
+		return 500
 	}
 
 	if len(params.Body) > maxCharacters {
 		log.Printf("too many characters >:(")
 		w.WriteHeader(400)
-		return false
+		return 400
 	}
 
 	fmt.Println(params)
-	return true
+	return 200
 }
 
-func encodeJson(w http.ResponseWriter) {
+func encodeJsonValidRequest(w http.ResponseWriter, valid bool) {
 	type returnVals struct {
 		CreatedAt time.Time `json:"created_at"`
 		ID        int       `json:"id"`
@@ -85,8 +88,28 @@ func encodeJson(w http.ResponseWriter) {
 	respBody := returnVals{
 		CreatedAt: time.Now(),
 		ID:        123,
-		Valid:     true,
+		Valid:     valid,
 	}
+
+	dat, err := json.Marshal(respBody)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(dat)
+}
+
+func encodeJsonInvalidRequest(w http.ResponseWriter) {
+	type returnVals struct {
+		Error string `json:"error"`
+	}
+	respBody := returnVals{
+		Error: "message too long :/",
+	}
+
 	dat, err := json.Marshal(respBody)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
